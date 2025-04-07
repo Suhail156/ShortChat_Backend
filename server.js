@@ -12,70 +12,70 @@ dotenv.config();
 
 const app = express();
 
-// Define allowed origins
-const allowedOrigins = ['http://localhost:5173', 'https://short-chat-frontend-og9y.vercel.app'];
+// MongoDB connection
+mongoose.connect(process.env.DB)
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-// CORS configuration for Express
+// Allowed origins
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://short-chat-frontend-og9y.vercel.app',
+];
+
+// CORS config
 app.use(cors({
-  origin: (origin, callback) => {
+  origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST'],
-  credentials: true
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
 }));
 
+// Allow preflight requests
+app.options('*', cors());
+
+// Middleware
 app.use(express.json());
 
-// Test route to confirm server is running
+// Routes
+app.use('/user', userRoutes);
+app.use('/messages', messageRouter);
+
+// Test route
 app.get('/', (req, res) => {
-  res.send('Server is running and CORS is configured ✅');
+  res.send('Server is up and running 🚀');
 });
 
-// Create HTTP server and Socket.IO server
+// HTTP server and Socket.IO setup
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true,
-  }
+  },
 });
 
-// Socket.IO connection handler
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  console.log('🟢 User connected:', socket.id);
 
   socket.on('send_message', (data) => {
     io.emit('receive_message', data);
   });
 
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    console.log('🔴 User disconnected:', socket.id);
   });
 });
-
-// MongoDB connection
-mongoose.connect(process.env.DB)
-  .then(() => console.log('MongoDB connected'))
-  .catch((error) => console.log('MongoDB connection error:', error));
-
-// Routes
-app.use('/user', userRoutes);
-app.use('/messages', messageRouter);
 
 // Start server
 const PORT = process.env.PORT || 7000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
