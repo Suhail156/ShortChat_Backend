@@ -19,37 +19,32 @@ export const signup = async (req, res) => {
 }
 
 export const login = async (req, res) => {
-    const { emailOrPhone, password } = req.body
-    console.log(req.body)
-
-    const hashedPassword = md5(password)
-
     try {
-        const user = await User.findOne({
-            $or: [{ email: emailOrPhone }, { phone: emailOrPhone }],
-            password: hashedPassword
-        })
-
-        if (!user) return res.status(400).json({ message: 'User not found' })
-
-        const token = jwt.sign(
-            { email: user.email, id: user._id }, 
-            process.env.USER_SECRET_TOKEN,       
-            { expiresIn: '7d' }                  
-        )
-
-        // ✅ Send token in response
-        res.status(200).json({
-            message: 'Login successful',
-            token,
-            data: user
-        })
-
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ message: 'Server error' })
+      const { emailOrPhone, password } = req.body;
+  
+      if (!emailOrPhone || !password) {
+        return res.status(400).json({ message: "Email/Phone and password are required" });
+      }
+  
+      const user = await User.findOne({
+        $or: [{ email: emailOrPhone }, { phone: emailOrPhone }],
+      });
+  
+      if (!user) return res.status(404).json({ message: "User not found" });
+  
+      if (user.password !== password) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+  
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  
+      return res.status(200).json({ message: "Login successful", data: { ...user._doc, token } });
+    } catch (err) {
+      console.error("Login error:", err);
+      res.status(500).json({ message: "Internal Server Error" });
     }
-}
+  };
+  
 
 
 // controllers/userController.js
