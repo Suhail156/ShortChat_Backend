@@ -58,11 +58,6 @@ export const login = async (req, res) => {
         return res.status(401).json({ message: "Invalid credentials" });
       }
   
-      if (!process.env.USER_SECRET_TOKEN) {
-        console.error("Missing USER_SECRET_TOKEN in environment variables");
-        return res.status(500).json({ message: "Server misconfiguration" });
-      }
-  
       const token = jwt.sign({ id: user._id }, process.env.USER_SECRET_TOKEN, { expiresIn: "7d" });
   
       return res.status(200).json({
@@ -73,8 +68,8 @@ export const login = async (req, res) => {
         },
       });
     } catch (err) {
-      console.error("Login error:", err);
-      res.status(500).json({ message: "Internal Server Error" });
+      console.error("Login error:", err.message, err.stack); // 👈 Better logging
+      return res.status(500).json({ message: "Internal Server Error", error: err.message });
     }
   };
   
