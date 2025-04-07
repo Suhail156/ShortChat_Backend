@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get('/', getMessages);
 router.post('/', createMessage)
-router.get("/:user1/:user2", getMessagesBetweenUsers);
+router.get('/:user1([a-zA-Z0-9]+)/:user2([a-zA-Z0-9]+)', getMessagesBetweenUsers);
 
 
 export default router;
