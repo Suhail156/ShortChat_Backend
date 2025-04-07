@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import userRoutes from './Routes/userRoutes.js';
-import messageRouter from './Routes/messageRoute.js'
+import messageRouter from './Routes/messageRoute.js';
 import http from 'http';
 import cors from 'cors';
 import { Server } from 'socket.io';
@@ -10,15 +10,23 @@ import { Server } from 'socket.io';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// Allow both local and deployed frontend
+const allowedOrigins = ['http://localhost:5173', 'https://short-chat-frontend-og9y.vercel.app'];
+
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 const server = http.createServer(app);
 
-
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
   },
 });
@@ -39,9 +47,8 @@ mongoose.connect(process.env.DB)
   .then(() => console.log('MongoDB connected'))
   .catch((error) => console.log(error));
 
-
 app.use('/user', userRoutes);
-app.use('/messages',messageRouter)
+app.use('/messages', messageRouter);
 
 const PORT = process.env.PORT || 7000;
 server.listen(PORT, () => {
