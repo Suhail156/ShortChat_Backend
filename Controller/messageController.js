@@ -47,3 +47,22 @@ export const createMessage = async (req, res) => {
     res.status(500).json({ error: "Failed to create message" });
   }
 };
+
+// DELETE a message by ID
+export const deleteMessage = async (req, res) => {
+    const { id } = req.params;
+  
+    try {
+      const deleted = await Message.findByIdAndDelete(id);
+  
+      if (!deleted) {
+        return res.status(404).json({ error: "Message not found" });
+      }
+  
+      res.json({ message: "Message deleted successfully" });
+    } catch (error) {
+      console.error("Delete message error:", error);
+      res.status(500).json({ error: "Failed to delete message" });
+    }
+  };
+  
