@@ -1,12 +1,28 @@
 import Message from "../Models/messageModel.js";
 
-// GET all messages
+// GET all messages (optional: admin/debug view)
 export const getMessages = async (req, res) => {
   try {
     const messages = await Message.find()
       .sort({ createdAt: 1 })
       .populate("sender", "name")
       .populate("receiver", "name");
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch messages" });
+  }
+};
+
+// GET messages between 2 users
+export const getMessagesBetweenUsers = async (req, res) => {
+  const { user1, user2 } = req.params;
+  try {
+    const messages = await Message.find({
+      $or: [
+        { sender: user1, receiver: user2 },
+        { sender: user2, receiver: user1 },
+      ],
+    }).sort({ createdAt: 1 });
     res.json(messages);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch messages" });
@@ -31,21 +47,3 @@ export const createMessage = async (req, res) => {
     res.status(500).json({ error: "Failed to create message" });
   }
 };
-
-
-export const getMessagesBetweenUsers = async (req, res) => {
-    const { user1, user2 } = req.params;
-    try {
-      const messages = await Message.find({
-        $or: [
-          { sender: user1, receiver: user2 },
-          { sender: user2, receiver: user1 },
-        ],
-      }).sort({ createdAt: 1 });
-  
-      res.json(messages);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch messages" });
-    }
-  };
-  

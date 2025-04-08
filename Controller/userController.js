@@ -53,9 +53,19 @@ export const login = async (req, res) => {
         return res.status(404).json({ message: "User not found" });
       }
   
+      if (!user.password) {
+        console.log("User found but no password set:", user);
+        return res.status(400).json({ message: "User password is missing" });
+      }
+  
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         return res.status(401).json({ message: "Invalid credentials" });
+      }
+  
+      if (!process.env.USER_SECRET_TOKEN) {
+        console.error("Missing USER_SECRET_TOKEN in .env");
+        return res.status(500).json({ message: "Token secret not configured" });
       }
   
       const token = jwt.sign({ id: user._id }, process.env.USER_SECRET_TOKEN, { expiresIn: "7d" });
@@ -63,12 +73,18 @@ export const login = async (req, res) => {
       return res.status(200).json({
         message: "Login successful",
         data: {
-          ...user._doc,
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            // other fields you want to expose
+          },
           token,
         },
       });
     } catch (err) {
-      console.error("Login error:", err.message, err.stack); // 👈 Better logging
+      console.error("Login error:", err.message, err.stack);
       return res.status(500).json({ message: "Internal Server Error", error: err.message });
     }
   };
@@ -81,6 +97,8 @@ export const getAllUsers = async (req, res) => {
     try {
         const users = await User.find().select("_id name");
         res.json(users);
+        console.log(users);
+        
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch users" });
     }
